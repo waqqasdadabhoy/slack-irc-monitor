@@ -2,11 +2,12 @@ package io.github.waqqasdadabhoy.slack_irc_monitor
 
 import com.flyberrycapital.slack.SlackClient
 import java.util.concurrent.TimeUnit
-import scala.collection.JavaConverters._
 
+import scala.collection.JavaConverters._
 import org.pircbotx.Configuration
 import org.pircbotx.PircBotX
 import org.pircbotx.hooks.ListenerAdapter
+import org.pircbotx.hooks.events.JoinEvent
 import org.pircbotx.hooks.types.GenericMessageEvent
 import org.pircbotx.output.OutputIRC
 
@@ -21,6 +22,10 @@ class MonitorBot(config: Config, slack_user_to_notify: String) {
 
     // Connect to Slack & IRC
     val s = new SlackClient(config.token)
+    // The default timeout values are too small
+    s.connTimeout(5000)
+    s.readTimeout(5000)
+//    print(s.channels.list()) // Used for debugging -
 
     val port_number: Int = if (config.ircOptions.asScala.contains("port")) config.ircOptions.asScala("port").toInt else 6667
 
@@ -71,8 +76,10 @@ class MonitorBot(config: Config, slack_user_to_notify: String) {
 }
 
 class IrcListener(random_string: String) extends ListenerAdapter {
-  @Override def onJoin(event: GenericMessageEvent): Unit = {
+  override def onJoin(event: JoinEvent): Unit = {
     event.respond(random_string)
     new OutputIRC(event.getBot[PircBotX]).quitServer()
   }
+
+
 }
